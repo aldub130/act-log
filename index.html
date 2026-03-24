@@ -417,6 +417,7 @@ body {
         <div class="ct">Historique musculation</div>
         <div id="hist-list"></div>
       </div>
+      <button class="fab" onclick="exportCSV()">⬇ Exporter mes données</button>
     </div>
 
   </div>
@@ -850,6 +851,60 @@ function init(){
   document.getElementById('hdr-date').textContent=
     DAYS_FR[now.getDay()]+' '+now.getDate()+' '+MONTHS[now.getMonth()]+' '+now.getFullYear();
   buildDashboard();
+}
+
+function exportCSV() {
+  const lines = [];
+
+  // En-tête
+  lines.push('Type,Date,Exercice,Série,Reps,Poids(kg),Volume(kg),Durée(min),Détails,Note');
+
+  // Séances musculation
+  DB.sessions.forEach(s => {
+    s.exercises.forEach(ex => {
+      ex.sets.forEach((st, si) => {
+        lines.push([
+          'Musculation',
+          s.date,
+          ex.name,
+          si + 1,
+          st.reps,
+          st.weight,
+          st.reps * st.weight,
+          '',
+          '',
+          ''
+        ].join(','));
+      });
+    });
+  });
+
+  // Autres activités
+  DB.activities.forEach(a => {
+    const type = ACT_TYPES.find(t => t.key === a.type)?.label || a.type;
+    lines.push([
+      type,
+      a.date,
+      '',
+      '',
+      '',
+      '',
+      '',
+      a.duree,
+      a.details || '',
+      a.note || ''
+    ].join(','));
+  });
+
+  // Téléchargement
+  const csv = lines.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'fittrack_' + todayStr() + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 init();
