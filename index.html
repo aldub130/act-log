@@ -435,7 +435,7 @@ body {
     <div class="frow-row">
       <div class="frow"><div class="flbl">Séries</div><input type="number" id="ex-sets" value="3" min="1" max="20" inputmode="numeric"></div>
       <div class="frow"><div class="flbl">Reps</div><input type="number" id="ex-reps" value="10" min="1" max="100" inputmode="numeric"></div>
-      <div class="frow"><div class="flbl">Poids kg</div><input type="number" id="ex-poids" value="20" min="0" max="500" step="0.5" inputmode="decimal"></div>
+      <div class="frow"><div class="flbl">Poids kg</div><input type="number" id="ex-poids" placeholder="Poids kg" min="0" max="500" step="0.5" inputmode="decimal"></div>
     </div>
     <div class="mact">
       <button class="btn-cancel" onclick="closeModals()">Annuler</button>
@@ -545,7 +545,7 @@ function buildDashboard(){
           <div class="wname">Musculation</div>
           <div class="wmeta">${fmtDate(item.date)} · ${item.exercises.map(e=>e.name).join(', ')}</div>
         </div>
-        <span class="badge ok">${Math.round(vol).toLocaleString()} kg</span>
+        <span class="badge ok">${vol > 0 ? Math.round(vol).toLocaleString()+' kg' : 'Poids du corps'}</span>
       </div>`;
     } else {
       const t = ACT_TYPES.find(t=>t.key===item.type)||ACT_TYPES[5];
@@ -609,7 +609,7 @@ function renderExercises(session){
     return `<div class="ex-block">
       <div class="ex-head">
         <div class="ex-title">${ex.name}</div>
-        <span class="vol-pill">${Math.round(vol).toLocaleString()} kg</span>
+        <span class="vol-pill">${vol > 0 ? Math.round(vol).toLocaleString()+' kg' : 'Poids du corps'}</span>
         ${isPR?'<span class="pr-pill">PR !</span>':''}
         <button class="rm-btn" onclick="removeEx(${ei})">×</button>
       </div>
@@ -629,7 +629,7 @@ function renderSummary(session){
   let vol=0,sets=0,reps=0;
   session.exercises.forEach(ex=>ex.sets.forEach(st=>{ vol+=st.reps*st.weight; sets++; reps+=st.reps; }));
   document.getElementById('sum-grid').innerHTML=`
-    <div class="sum-box"><div class="sum-n" style="color:var(--t)">${Math.round(vol).toLocaleString()}</div><div class="sum-l">volume (kg)</div></div>
+    <div class="sum-box"><div class="sum-n" style="color:var(--t)">${vol > 0 ? Math.round(vol).toLocaleString()+' kg' : '—'}</div><div class="sum-l">volume</div></div>
     <div class="sum-box"><div class="sum-n" style="color:var(--g)">${sets}</div><div class="sum-l">séries</div></div>
     <div class="sum-box"><div class="sum-n" style="color:var(--a4)">${reps}</div><div class="sum-l">reps total</div></div>`;
 }
@@ -780,7 +780,7 @@ function buildProgression(){
     return `<div class="hist-block">
       <div class="hist-hdr">
         <span class="hist-date">${fmtDate(s.date)}</span>
-        <span class="hist-vol">${Math.round(vol).toLocaleString()} kg</span>
+        <span class="hist-vol">${vol > 0 ? Math.round(vol).toLocaleString()+' kg' : '—'}</span>
       </div>
       ${s.exercises.map(e=>{
         const sDesc=e.sets.map(st=>`${st.reps}×${st.weight}kg`).join(', ');
@@ -812,7 +812,7 @@ function saveExercise(){
   if(!name){alert('Choisis ou saisis un exercice.');return;}
   const sets=parseInt(document.getElementById('ex-sets').value)||3;
   const reps=parseInt(document.getElementById('ex-reps').value)||10;
-  const poids=parseFloat(document.getElementById('ex-poids').value)||20;
+  const poids=parseFloat(document.getElementById('ex-poids').value)||0;
   const s=getTodaySession();
   s.exercises.push({name,sets:Array.from({length:sets},()=>({reps,weight:poids,done:false}))});
   save(); closeModals(); buildMusculation();
