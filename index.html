@@ -435,7 +435,7 @@ body {
     <div class="frow-row">
       <div class="frow"><div class="flbl">Séries</div><input type="number" id="ex-sets" value="3" min="1" max="20" inputmode="numeric"></div>
       <div class="frow"><div class="flbl">Reps</div><input type="number" id="ex-reps" value="10" min="1" max="100" inputmode="numeric"></div>
-      <div class="frow"><div class="flbl">Poids kg</div><input type="number" id="ex-poids" placeholder="Poids kg" min="0" max="500" step="0.5" inputmode="decimal"></div>
+      <div class="frow"><div class="flbl">Poids <button id="unit-toggle" onclick="toggleUnit()" style="background:var(--tl);border:0.5px solid var(--tm);color:var(--t);border-radius:20px;font-size:11px;font-weight:600;padding:2px 8px;cursor:pointer;font-family:'DM Sans',sans-serif">kg</button></div><input type="number" id="ex-poids" placeholder="Poids" min="0" max="500" step="0.5" inputmode="decimal"></div>
     </div>
     <div class="mact">
       <button class="btn-cancel" onclick="closeModals()">Annuler</button>
@@ -479,6 +479,7 @@ const ACT_TYPES=[
 let DB = JSON.parse(localStorage.getItem('fittrack_db') || 'null') || { sessions:[], activities:[] };
 let selPreset = '';
 let selActType = 'course';
+let weightUnit = 'kg';
 
 function save(){ localStorage.setItem('fittrack_db', JSON.stringify(DB)); }
 function todayStr(){ return new Date().toISOString().split('T')[0]; }
@@ -812,7 +813,8 @@ function saveExercise(){
   if(!name){alert('Choisis ou saisis un exercice.');return;}
   const sets=parseInt(document.getElementById('ex-sets').value)||3;
   const reps=parseInt(document.getElementById('ex-reps').value)||10;
-  const poids=parseFloat(document.getElementById('ex-poids').value)||0;
+  const poidsRaw = parseFloat(document.getElementById('ex-poids').value)||0;
+  const poids = weightUnit === 'lbs' ? Math.round(poidsRaw * 0.453592 * 100) / 100 : poidsRaw;
   const s=getTodaySession();
   s.exercises.push({name,sets:Array.from({length:sets},()=>({reps,weight:poids,done:false}))});
   save(); closeModals(); buildMusculation();
@@ -965,6 +967,11 @@ function showSession(date){
       <button class="btn-save" style="flex:1" onclick="closeModals()">Fermer</button>
     </div>`;
   document.getElementById('modal-ex').classList.add('open');
+}
+
+function toggleUnit(){
+  weightUnit = weightUnit === 'kg' ? 'lbs' : 'kg';
+  document.getElementById('unit-toggle').textContent = weightUnit;
 }
 
 init();
