@@ -777,7 +777,7 @@ function buildProgression(){
   if(!sessions.length){histEl.innerHTML='<div class="empty">Aucune séance muscu enregistrée</div>';return;}
   histEl.innerHTML=sessions.map(s=>{
     const vol=s.exercises.reduce((t,e)=>t+e.sets.reduce((t2,st)=>t2+st.reps*st.weight,0),0);
-    return `<div class="hist-block">
+    return `<div class="hist-block" onclick="showSession('${s.date}')" style="cursor:pointer">
       <div class="hist-hdr">
         <span class="hist-date">${fmtDate(s.date)}</span>
         <span class="hist-vol">${vol > 0 ? Math.round(vol).toLocaleString()+' kg' : '—'}</span>
@@ -843,6 +843,24 @@ function saveActivity(){
 
 function closeModals(){
   document.querySelectorAll('.modal-bg').forEach(m=>m.classList.remove('open'));
+  // Réinitialise le modal exercice après affichage d'une séance passée
+  const modal = document.querySelector('#modal-ex .modal');
+  modal.innerHTML = `
+    <div class="modal-title">Ajouter un exercice</div>
+    <div class="flbl">Exercice</div>
+    <div class="presets-wrap" id="ex-presets"></div>
+    <div class="frow">
+      <input type="text" id="ex-custom" placeholder="Ou saisir un exercice personnalisé...">
+    </div>
+    <div class="frow-row">
+      <div class="frow"><div class="flbl">Séries</div><input type="number" id="ex-sets" value="3" min="1" max="20" inputmode="numeric"></div>
+      <div class="frow"><div class="flbl">Reps</div><input type="number" id="ex-reps" value="10" min="1" max="100" inputmode="numeric"></div>
+      <div class="frow"><div class="flbl">Poids kg</div><input type="number" id="ex-poids" placeholder="Poids kg" min="0" max="500" step="0.5" inputmode="decimal"></div>
+    </div>
+    <div class="mact">
+      <button class="btn-cancel" onclick="closeModals()">Annuler</button>
+      <button class="btn-save" onclick="saveExercise()">Ajouter</button>
+    </div>`;
 }
 
 // ─── INIT ─────────────────────────────────────────────────────
@@ -905,6 +923,48 @@ function exportCSV() {
   a.download = 'fittrack_' + todayStr() + '.csv';
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function showSession(date){
+  const s = DB.sessions.find(s=>s.date===date);
+  if(!s || !s.exercises.length) return;
+
+  const MONTHS_LOCAL = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+  const d = new Date(date);
+  const label = d.getDate()+' '+MONTHS_LOCAL[d.getMonth()]+' '+d.getFullYear();
+
+  let html = `<div style="margin-bottom:12px;font-size:13px;font-weight:600;color:var(--text2)">${label}</div>`;
+
+  s.exercises.forEach(ex => {
+    const vol = ex.sets.reduce((t,st)=>t+st.reps*st.weight,0);
+    html += `<div class="ex-block">
+      <div class="ex-head">
+        <div class="ex-title">${ex.name}</div>
+        <span class="vol-pill">${vol > 0 ? Math.round(vol).toLocaleString()+' kg' : 'Poids du corps'}</span>
+      </div>
+      <table class="sets-tbl">
+        <thead><tr><th></th><th>Reps</th><th>Poids</th><th>Statut</th></tr></thead>
+        <tbody>
+          ${ex.sets.map((st,si)=>`<tr>
+            <td>Série ${si+1}</td>
+            <td style="font-family:'DM Mono',monospace">${st.reps}</td>
+            <td style="font-family:'DM Mono',monospace">${st.weight > 0 ? st.weight+' kg' : '—'}</td>
+            <td>${st.done ? '<span style="color:var(--g)">✓</span>' : '<span style="color:var(--text3)">○</span>'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div><hr class="ex-divider">`;
+  });
+
+  // Affiche dans le modal existant en mode lecture seule
+  const modal = document.querySelector('#modal-ex .modal');
+  modal.innerHTML = `
+    <div class="modal-title">Séance passée</div>
+    ${html}
+    <div class="mact">
+      <button class="btn-save" style="flex:1" onclick="closeModals()">Fermer</button>
+    </div>`;
+  document.getElementById('modal-ex').classList.add('open');
 }
 
 init();
